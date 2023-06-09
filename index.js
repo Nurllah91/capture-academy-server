@@ -44,12 +44,17 @@ async function run() {
 
 
 
+
     // class related  API
     app.get('/classes', async(req, res)=>{
         const result = await classCollection.find().toArray();
         res.send(result);
     })
 
+    app.get('/classes/popular', async(req, res)=>{
+      const popularClass = await classCollection.find().sort({enrolled: -1}).limit(6).toArray();
+      res.send(popularClass);
+    })
 
 
     // Send a ping to confirm a successful connection
