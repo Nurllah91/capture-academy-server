@@ -32,27 +32,32 @@ async function run() {
   try {
 
     const userCollection = client.db("capture-academy").collection("users");
-    const paymentCollection = client.db("capture-academy").collection("payments");    
+    const paymentCollection = client.db("capture-academy").collection("payments");
     const classCollection = client.db("capture-academy").collection("classes");
 
 
     // users api
-    app.get('/users', async(req, res)=>{
-        const result = await userCollection.find().toArray();
-        res.send(result);
+    app.get('/users', async (req, res) => {
+      const result = await userCollection.find().toArray();
+      res.send(result);
     })
 
-
+    // instructor api
+    app.get('/instructors', async(req, res)=>{
+      const query = {role: "Instructor"};
+      const result = await userCollection.find(query).toArray();
+      res.send(result);
+    })
 
 
     // class related  API
-    app.get('/classes', async(req, res)=>{
-        const result = await classCollection.find().toArray();
-        res.send(result);
+    app.get('/classes', async (req, res) => {
+      const result = await classCollection.find().toArray();
+      res.send(result);
     })
 
-    app.get('/classes/popular', async(req, res)=>{
-      const popularClass = await classCollection.find().sort({enrolled: -1}).limit(6).toArray();
+    app.get('/classes/popular', async (req, res) => {
+      const popularClass = await classCollection.find().sort({ enrolled: -1 }).limit(6).toArray();
       res.send(popularClass);
     })
 
@@ -68,10 +73,10 @@ async function run() {
 run().catch(console.dir);
 
 
-app.get('/', (req, res)=>{
-    res.send("Capture academy server is Running")
+app.get('/', (req, res) => {
+  res.send("Capture academy server is Running")
 })
 
-app.listen(port, ()=>{
-    console.log(`Capture academy server is running on the port ${port}`);
+app.listen(port, () => {
+  console.log(`Capture academy server is running on the port ${port}`);
 })
