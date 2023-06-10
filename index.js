@@ -43,6 +43,12 @@ async function run() {
     })
 
     // instructor api
+    app.get('/instructors/popular', async(req, res)=>{
+      const result = await userCollection.find().limit(6).toArray();
+      res.send(result);
+    })
+
+    
     app.get('/instructors', async(req, res)=>{
       const query = {role: "Instructor"};
       const result = await userCollection.find(query).toArray();
