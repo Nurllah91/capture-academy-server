@@ -52,6 +52,7 @@ async function run() {
     const userCollection = client.db("capture-academy").collection("users");
     const paymentCollection = client.db("capture-academy").collection("payments");
     const classCollection = client.db("capture-academy").collection("classes");
+    const selectedClassCollection  = client.db("capture-academy").collection("selected-class");
 
 
     // JWT TOKEN created
@@ -60,28 +61,28 @@ async function run() {
       const token = jwt.sign(user, process.env.SECRET_TOKEN, { expiresIn: '1d' })
       res.send({ token });
     })
-    
+
     // admin verify
-    const verifyAdmin = async (req, res, next) =>{
+    const verifyAdmin = async (req, res, next) => {
       const email = req.decoded.email;
-      const query = {email:email};
+      const query = { email: email };
       const user = await userCollection.findOne(query);
-      if(user?.role !== 'admin'){
-          return res.status(403).send({error: true, message: 'forbidden access'})
+      if (user?.role !== 'admin') {
+        return res.status(403).send({ error: true, message: 'forbidden access' })
       }
       next();
-  }
-
-  // verify instructor
-  const verifyInstructor = async (req, res, next) =>{
-    const email = req.decoded.email;
-    const query = {email:email};
-    const user = await userCollection.findOne(query);
-    if(user?.role !== 'instructor'){
-        return res.status(403).send({error: true, message: 'forbidden access'})
     }
-    next();
-}
+
+    // verify instructor
+    const verifyInstructor = async (req, res, next) => {
+      const email = req.decoded.email;
+      const query = { email: email };
+      const user = await userCollection.findOne(query);
+      if (user?.role !== 'instructor') {
+        return res.status(403).send({ error: true, message: 'forbidden access' })
+      }
+      next();
+    }
 
     // users api
     app.get('/users', async (req, res) => {
@@ -89,33 +90,49 @@ async function run() {
       res.send(result);
     })
 
-    // getting admin
-    app.get('/users/admin/:email', verifyJWT, async(req, res)=>{
-      const email = req.params.email;
-      if(req.decoded.email !== email){
-        res.send({admin: false})
+    // save a new user
+    app.post('/users', async (req, res) => {
+      const user = req.body;
+      const userEmail = user.email;
+      const query = { email: userEmail };
+
+      const existingUser = await userCollection.findOne(query)
+      if (existingUser) {
+        return res.send({ message: 'user already exist' })
       }
 
-      const query = {email: email}
+      const result = await userCollection.insertOne(user);
+      res.send(result);
+    })
+
+
+    // getting admin
+    app.get('/users/admin/:email', verifyJWT, async (req, res) => {
+      const email = req.params.email;
+      if (req.decoded.email !== email) {
+        res.send({ admin: false })
+      }
+
+      const query = { email: email }
       const user = await userCollection.findOne(query);
 
-      const result = {admin: user?.role === 'admin'};
+      const result = { admin: user?.role === 'admin' };
       res.send(result);
     })
 
     // instructor related api
 
     // getting Instructor
-    app.get('/users/instructor/:email', verifyJWT, async(req, res)=>{
+    app.get('/users/instructor/:email', verifyJWT, async (req, res) => {
       const email = req.params.email;
-      if(req.decoded.email !== email){
-        res.send({instructor: false})
+      if (req.decoded.email !== email) {
+        res.send({ instructor: false })
       }
 
-      const query = {email: email}
+      const query = { email: email }
       const user = await userCollection.findOne(query);
 
-      const result = {instructor: user?.role === 'instructor'};
+      const result = { instructor: user?.role === 'instructor' };
       res.send(result);
     })
 
@@ -143,6 +160,14 @@ async function run() {
     app.get('/classes/popular', async (req, res) => {
       const popularClass = await classCollection.find().sort({ enrolled: -1 }).limit(6).toArray();
       res.send(popularClass);
+    })
+
+
+    // selected class add
+    app.post('/selected-class', async(req, res)=>{
+      const selectedClass = req.body;
+      const result = await selectedClassCollection.insertOne(selectedClass);
+      res.send(result);
     })
 
 
