@@ -164,11 +164,33 @@ async function run() {
 
 
     // selected class add
+    app.get('/selected-class', verifyJWT, async(req, res)=>{
+      const email = req.query.email;
+      if(!email){
+        res.send([]);
+      }
+
+      const decodedEmail = req.decoded.email;
+      if(email !== decodedEmail){
+        return res.status(403).send({error: true, message: "Forbidden access"})
+      }
+
+      const query = {email: email};
+      const result = await selectedClassCollection.find(query).toArray();
+      res.send(result);
+    })
+
+
+
+
+
     app.post('/selected-class', async(req, res)=>{
       const selectedClass = req.body;
       const result = await selectedClassCollection.insertOne(selectedClass);
       res.send(result);
     })
+
+
 
 
     // Send a ping to confirm a successful connection
