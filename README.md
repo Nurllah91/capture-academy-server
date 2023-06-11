@@ -16,4 +16,4 @@
 
 
 
-## Live Link: 
+## Live Link: https://capture-academy-server.vercel.app
