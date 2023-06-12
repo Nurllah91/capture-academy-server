@@ -3,6 +3,7 @@ const express = require('express');
 const app = express();
 const cors = require('cors');
 require('dotenv').config();
+const stripe = require('stripe')(process.env.STRIPE_PAYMENT_SECRET_KEY);
 const port = process.env.PORT || 5000;
 const jwt = require('jsonwebtoken');
 
@@ -53,7 +54,7 @@ async function run() {
     const paymentCollection = client.db("capture-academy").collection("payments");
     const classCollection = client.db("capture-academy").collection("classes");
     const pendingClassCollection = client.db("capture-academy").collection("pending-classes");
-    const selectedClassCollection  = client.db("capture-academy").collection("selected-class");
+    const selectedClassCollection = client.db("capture-academy").collection("selected-class");
 
 
     // JWT TOKEN created
@@ -108,6 +109,35 @@ async function run() {
       res.send(result);
     })
 
+    // student payment
+    // crate payment intent 
+    app.post('/create-payment-intent', verifyJWT, async (req, res) => {
+      const { price } = req.body;
+      const amount = parseInt(price * 100);
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amount,
+        currency: 'usd',
+        payment_method_types: ['card']
+      })
+      res.send({
+        clientSecret: paymentIntent.client_secret
+      })
+    })
+
+    // payment history getting 
+    app.get('/payments', verifyJWT, async(req, res)=>{
+      const email = req.decoded.email;
+      const query = {email: email}
+      const result = await paymentCollection.find(query).toArray();
+      res.send(result);
+    })
+
+    // posting payment history
+    app.post('/payment', verifyJWT, async (req, res) => {
+      const payment = req.body;
+      const result = await paymentCollection.insertOne(payment);
+      res.send(result);
+    })
 
     // getting admin
     app.get('/users/admin/:email', verifyJWT, async (req, res) => {
@@ -139,12 +169,12 @@ async function run() {
       res.send(result);
     })
 
-    
-    app.post('/class', verifyJWT, verifyInstructor, async(req, res)=>{
-      const classes = req.body;
-      const result = await pendingClassCollection.insertOne(classes);
-      res.send(result)
-  })
+
+    //   app.post('/class', verifyJWT, verifyInstructor, async(req, res)=>{
+    //     const classes = req.body;
+    //     const result = await pendingClassCollection.insertOne(classes);
+    //     res.send(result)
+    // })
 
 
 
@@ -174,36 +204,36 @@ async function run() {
 
 
     // selected class add
-    app.get('/selected-class', verifyJWT, async(req, res)=>{
+    app.get('/selected-class', verifyJWT, async (req, res) => {
       const email = req.query.email;
-      if(!email){
+      if (!email) {
         res.send([]);
       }
 
       const decodedEmail = req.decoded.email;
-      if(email !== decodedEmail){
-        return res.status(403).send({error: true, message: "Forbidden access"})
+      if (email !== decodedEmail) {
+        return res.status(403).send({ error: true, message: "Forbidden access" })
       }
 
-      const query = {email: email};
+      const query = { email: email };
       const result = await selectedClassCollection.find(query).toArray();
       res.send(result);
     })
 
     // delete selected class 
-      app.delete('/selected-class/:id', async (req, res) => {
-        const id = req.params.id;
-        const query = { _id: new ObjectId(id) };
-        const result = await selectedClassCollection.deleteOne(query);
+    app.delete('/selected-class/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await selectedClassCollection.deleteOne(query);
 
-        res.send(result);
+      res.send(result);
     })
 
 
 
 
 
-    app.post('/selected-class', async(req, res)=>{
+    app.post('/selected-class', async (req, res) => {
       const selectedClass = req.body;
       const result = await selectedClassCollection.insertOne(selectedClass);
       res.send(result);
