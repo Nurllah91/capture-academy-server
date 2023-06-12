@@ -52,6 +52,7 @@ async function run() {
     const userCollection = client.db("capture-academy").collection("users");
     const paymentCollection = client.db("capture-academy").collection("payments");
     const classCollection = client.db("capture-academy").collection("classes");
+    const pendingClassCollection = client.db("capture-academy").collection("pending-classes");
     const selectedClassCollection  = client.db("capture-academy").collection("selected-class");
 
 
@@ -83,6 +84,8 @@ async function run() {
       }
       next();
     }
+
+
 
     // users api
     app.get('/users', async (req, res) => {
@@ -126,15 +129,22 @@ async function run() {
     app.get('/users/instructor/:email', verifyJWT, async (req, res) => {
       const email = req.params.email;
       if (req.decoded.email !== email) {
-        res.send({ instructor: false })
+        res.send({ Instructor: false })
       }
 
       const query = { email: email }
       const user = await userCollection.findOne(query);
 
-      const result = { instructor: user?.role === 'instructor' };
+      const result = { Instructor: user?.role === 'Instructor' };
       res.send(result);
     })
+
+    
+    app.post('/class', verifyJWT, verifyInstructor, async(req, res)=>{
+      const classes = req.body;
+      const result = await pendingClassCollection.insertOne(classes);
+      res.send(result)
+  })
 
 
 
