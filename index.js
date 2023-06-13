@@ -185,6 +185,47 @@ async function run() {
 
     })
 
+    // approve class by admin
+    app.patch('/manage-class/approve/:id', verifyJWT, verifyAdmin, async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          status: 'approved'
+        },
+      };
+
+      const result = await classCollection.updateOne(filter, updateDoc);
+      res.send(result);
+
+    })
+
+    // deny class by admin
+    app.patch('/manage-class/deny/:id', verifyJWT, verifyAdmin, async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          status: 'denied'
+        },
+      };
+
+      const result = await classCollection.updateOne(filter, updateDoc);
+      res.send(result);
+
+    })
+
+
+    // Delete a class by an admin
+
+    app.delete('/manage-class/:id', verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await classCollection.deleteOne(query);
+
+      res.send(result);
+    })
+
 
     // instructor related api
 
@@ -211,24 +252,24 @@ async function run() {
     })
 
     // instructor getting classes
-       app.get('/my-classes', verifyJWT, async (req, res) => {
-        const email = req.query.email;
-        if (!email) {
-          res.send([]);
-        }
-  
-        const decodedEmail = req.decoded.email;
-        if (email !== decodedEmail) {
-          return res.status(403).send({ error: true, message: "Forbidden access" })
-        }
-  
-        const query = { email: email };
-        const result = await classCollection.find(query).toArray();
-        res.send(result);
-      })
+    app.get('/my-classes', verifyJWT, async (req, res) => {
+      const email = req.query.email;
+      if (!email) {
+        res.send([]);
+      }
 
-      
-      // instructor getting his class for update
+      const decodedEmail = req.decoded.email;
+      if (email !== decodedEmail) {
+        return res.status(403).send({ error: true, message: "Forbidden access" })
+      }
+
+      const query = { email: email };
+      const result = await classCollection.find(query).toArray();
+      res.send(result);
+    })
+
+
+    // instructor getting his class for update
     app.get('/update-class/:id', async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
@@ -238,33 +279,33 @@ async function run() {
     })
 
 
-         // update a class info
-         app.put('/my-class/update/:id',verifyJWT, verifyInstructor, async(req, res) =>{
-          const id = req.params.id;
-          const filter = {_id: new ObjectId(id)};
-          const options = {upsert: true};
-          const classItem = req.body;
+    // update a class info
+    app.put('/my-class/update/:id', verifyJWT, verifyInstructor, async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const options = { upsert: true };
+      const classItem = req.body;
 
-          // getting updated info 
-          const updateClass = {
-              $set: {
-                  price: classItem.price, 
-                  totalSeats: classItem.totalSeats, 
-                  name: classItem.name, 
-                  image: classItem.image, 
-                  instructorName: classItem.instructorName  
-              }
-          }
+      // getting updated info 
+      const updateClass = {
+        $set: {
+          price: classItem.price,
+          totalSeats: classItem.totalSeats,
+          name: classItem.name,
+          image: classItem.image,
+          instructorName: classItem.instructorName
+        }
+      }
 
-          const result = await classCollection.updateOne(filter, updateClass, options)
-          
-          res.send(result);
-      })
+      const result = await classCollection.updateOne(filter, updateClass, options)
 
-
+      res.send(result);
+    })
 
 
-      // instructor deleting his class
+
+
+    // instructor deleting his class
     app.delete('/my-class/:id', async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
@@ -339,8 +380,8 @@ async function run() {
 
 
     // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    // await client.db("admin").command({ ping: 1 });
+    // console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
