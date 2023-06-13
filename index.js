@@ -80,7 +80,7 @@ async function run() {
       const email = req.decoded.email;
       const query = { email: email };
       const user = await userCollection.findOne(query);
-      if (user?.role !== 'instructor') {
+      if (user?.role !== 'Instructor') {
         return res.status(403).send({ error: true, message: 'forbidden access' })
       }
       next();
@@ -95,7 +95,7 @@ async function run() {
     })
 
     // save a new user
-    app.post('/users', async (req, res) => {
+    app.post('/users', verifyJWT, verifyAdmin, async (req, res) => {
       const user = req.body;
       const userEmail = user.email;
       const query = { email: userEmail };
@@ -125,10 +125,10 @@ async function run() {
     })
 
     // payment history getting 
-    app.get('/payments', verifyJWT, async(req, res)=>{
+    app.get('/payments', verifyJWT, async (req, res) => {
       const email = req.decoded.email;
-      const query = {email: email}
-      const result = await paymentCollection.find(query).toArray();
+      const query = { email: email }
+      const result = await paymentCollection.find(query).sort({ date: 1 }).toArray();
       res.send(result);
     })
 
@@ -153,6 +153,39 @@ async function run() {
       res.send(result);
     })
 
+
+    app.patch('/users/admin/:id', verifyJWT, verifyAdmin, async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          role: 'admin'
+        },
+      };
+
+      const result = await userCollection.updateOne(filter, updateDoc);
+      res.send(result);
+
+    })
+
+
+
+    app.patch('/users/instructor/:id', verifyJWT, verifyAdmin, async (req, res) => {
+      const id = req.params.id;
+      console.log(id);
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          role: 'Instructor'
+        },
+      };
+
+      const result = await userCollection.updateOne(filter, updateDoc);
+      res.send(result);
+
+    })
+
+
     // instructor related api
 
     // getting Instructor
@@ -170,12 +203,75 @@ async function run() {
     })
 
 
-    //   app.post('/class', verifyJWT, verifyInstructor, async(req, res)=>{
-    //     const classes = req.body;
-    //     const result = await pendingClassCollection.insertOne(classes);
-    //     res.send(result)
-    // })
+    // instructor add class
+    app.post('/class', verifyJWT, async (req, res) => {
+      const classes = req.body;
+      const result = await classCollection.insertOne(classes);
+      res.send(result)
+    })
 
+    // instructor getting classes
+       app.get('/my-classes', verifyJWT, async (req, res) => {
+        const email = req.query.email;
+        if (!email) {
+          res.send([]);
+        }
+  
+        const decodedEmail = req.decoded.email;
+        if (email !== decodedEmail) {
+          return res.status(403).send({ error: true, message: "Forbidden access" })
+        }
+  
+        const query = { email: email };
+        const result = await classCollection.find(query).toArray();
+        res.send(result);
+      })
+
+      
+      // instructor getting his class for update
+    app.get('/update-class/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await classCollection.findOne(query);
+
+      res.send(result);
+    })
+
+
+         // update a class info
+         app.put('/my-class/update/:id',verifyJWT, verifyInstructor, async(req, res) =>{
+          const id = req.params.id;
+          const filter = {_id: new ObjectId(id)};
+          const options = {upsert: true};
+          const classItem = req.body;
+
+          // getting updated info 
+          const updateClass = {
+              $set: {
+                  price: classItem.price, 
+                  totalSeats: classItem.totalSeats, 
+                  name: classItem.name, 
+                  image: classItem.image, 
+                  instructorName: classItem.instructorName  
+              }
+          }
+
+          const result = await classCollection.updateOne(filter, updateClass, options)
+          
+          res.send(result);
+      })
+
+
+
+
+      // instructor deleting his class
+    app.delete('/my-class/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await classCollection.deleteOne(query);
+
+      res.send(result);
+    })
 
 
     app.get('/instructors/popular', async (req, res) => {
