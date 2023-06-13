@@ -216,6 +216,22 @@ async function run() {
     })
 
 
+    //admin sent a feedback
+    app.patch('/manage-class/feedback/:id', verifyJWT, verifyAdmin, async(req, res)=>{
+
+      const id = req.params.id;
+      const feedback = req.body.feedback;
+      const update = { $set: { feedback } }
+      console.log("update btn", update);
+      const filter = {_id: new ObjectId(id)}
+      // const options = { upsert: true };
+
+      const result = await classCollection.updateOne(filter, update);
+      res.send(result);
+
+    })
+
+
     // Delete a class by an admin
 
     app.delete('/manage-class/:id', verifyJWT, verifyAdmin, async (req, res) => {
@@ -367,6 +383,19 @@ async function run() {
     })
 
 
+
+// delete paid class from selected class
+app.delete('/paid-class', async (req, res) => {
+  const ids = req.body.paidIds;
+ 
+
+    // Delete the documents matching the IDs
+    const result = await selectedClassCollection.deleteMany({ _id: { $in: ids } });
+
+    res.send(result);
+ 
+ 
+});
 
 
 
