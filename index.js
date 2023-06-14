@@ -95,7 +95,7 @@ async function run() {
     })
 
     // save a new user
-    app.post('/users', verifyJWT, verifyAdmin, async (req, res) => {
+    app.post('/users', async (req, res) => {
       const user = req.body;
       const userEmail = user.email;
       const query = { email: userEmail };
