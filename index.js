@@ -135,6 +135,13 @@ async function run() {
     // posting payment history
     app.post('/payment', verifyJWT, async (req, res) => {
       const payment = req.body;
+
+
+      const paidIds = payment.classId;
+      const objectIdsToDelete = paidIds.map((id) => new ObjectId(id));
+      const deleted = await selectedClassCollection.deleteMany({ _id: { $in: objectIdsToDelete } });
+
+
       const result = await paymentCollection.insertOne(payment);
       res.send(result);
     })
@@ -217,13 +224,13 @@ async function run() {
 
 
     //admin sent a feedback
-    app.patch('/manage-class/feedback/:id', verifyJWT, verifyAdmin, async(req, res)=>{
+    app.patch('/manage-class/feedback/:id', verifyJWT, verifyAdmin, async (req, res) => {
 
       const id = req.params.id;
       const feedback = req.body.feedback;
       const update = { $set: { feedback } }
       console.log("update btn", update);
-      const filter = {_id: new ObjectId(id)}
+      const filter = { _id: new ObjectId(id) }
       // const options = { upsert: true };
 
       const result = await classCollection.updateOne(filter, update);
@@ -384,18 +391,18 @@ async function run() {
 
 
 
-// delete paid class from selected class
-app.delete('/paid-class', async (req, res) => {
-  const ids = req.body.paidIds;
- 
+    // // delete paid class from selected class
+    // app.delete('/paid-class', async (req, res) => {
+    //   console.log("body", req.body);
+    //   const ids = req.body;
 
-    // Delete the documents matching the IDs
-    const result = await selectedClassCollection.deleteMany({ _id: { $in: ids } });
+    //   // Delete the documents matching the IDs
+    //   const result = await selectedClassCollection.deleteMany({ _id: { $in: ids } });
+    //   console.log(result);
+    //   res.send(result);
 
-    res.send(result);
- 
- 
-});
+
+    // });
 
 
 
