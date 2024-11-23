@@ -9,6 +9,14 @@
 
 
 
+## Local Installation
+
+To run this project locally first clone this repository and follow the commands in your terminal. Then it will run on the localhost 5000 port.
+
+```
+npm install
+npm start
+```
 
 
 
